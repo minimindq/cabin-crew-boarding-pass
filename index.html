@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daily Boarding Call — Interview Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #0E2238;
+    --cream: #F6F1E4;
+    --cream-2: #EFE8D6;
+    --gold: #C9A227;
+    --teal: #2F6F6B;
+    --coral: #C1443C;
+    --paper-shadow: rgba(14,34,56,0.18);
+  }
+  *{ box-sizing: border-box; }
+  html, body{
+    margin:0; padding:0;
+    background: var(--ink);
+    color: var(--ink);
+    font-family: 'Fraunces', serif;
+    min-height: 100vh;
+  }
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 32px 16px;
+  }
+  .board{ width: 100%; max-width: 480px; }
+  .status-strip{
+    display:flex; justify-content: space-between; align-items:baseline;
+    color: var(--cream); font-family: 'Space Mono', monospace;
+    font-size: 12px; letter-spacing: 0.06em; padding: 0 6px 10px;
+  }
+  .status-strip .streak{ color: var(--gold); }
+  .ticket{
+    position: relative; background: var(--cream); border-radius: 4px;
+    box-shadow: 0 24px 48px var(--paper-shadow); overflow: hidden;
+  }
+  .ticket::before, .ticket::after{
+    content: ""; position: absolute; left: 0; right: 0; height: 22px;
+    background: radial-gradient(circle at 10px 11px, transparent 9px, var(--cream) 9.5px) 0 0 / 24px 22px repeat-x;
+  }
+  .ticket-inner{ padding: 28px 28px 24px; }
+  .row-head{
+    display:flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 1px dashed rgba(14,34,56,0.25); padding-bottom: 16px; margin-bottom: 18px;
+  }
+  .brand{ font-weight: 600; font-size: 19px; letter-spacing: 0.01em; }
+  .brand span{ color: var(--teal); }
+  .day-tag{ font-family: 'Space Mono', monospace; font-size: 12px; text-align: right; color: var(--ink); opacity: 0.7; }
+  .category{
+    display:inline-block; font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: 0.08em; color: var(--teal); border: 1px solid var(--teal);
+    border-radius: 999px; padding: 4px 10px; margin-bottom: 14px;
+  }
+  .question{ font-size: 22px; line-height: 1.4; font-weight: 500; min-height: 96px; }
+
+  .camera-wrap{
+    margin-top: 18px; border-radius: 4px; overflow: hidden; background: #000;
+    position: relative; aspect-ratio: 4/3; display:flex; align-items:center; justify-content:center;
+  }
+  .camera-wrap video{ width: 100%; height: 100%; object-fit: cover; display:block; }
+  .camera-placeholder{
+    color: var(--cream); font-family:'Space Mono',monospace; font-size:12px; text-align:center; padding: 20px;
+    opacity: 0.7;
+  }
+  .rec-dot{
+    position:absolute; top:10px; left:10px; display:none; align-items:center; gap:6px;
+    background: rgba(0,0,0,0.55); color: #fff; font-family:'Space Mono',monospace; font-size:11px;
+    padding: 4px 8px; border-radius: 999px;
+  }
+  .rec-dot.show{ display:flex; }
+  .rec-dot .pulse{
+    width:8px; height:8px; border-radius:50%; background: var(--coral);
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+  .cam-controls{ display:flex; gap: 10px; margin-top: 12px; }
+  .controls-row{ display:flex; align-items:center; gap: 14px; margin-top: 18px; }
+  .timer{ font-family: 'Space Mono', monospace; font-size: 34px; font-weight: 700; min-width: 88px; }
+  .timer.low{ color: var(--coral); }
+  .btn{
+    font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.05em;
+    border: none; border-radius: 4px; padding: 10px 14px; cursor: pointer;
+    background: var(--ink); color: var(--cream); transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .btn:hover{ opacity: 0.88; }
+  .btn:active{ transform: scale(0.97); }
+  .btn:disabled{ opacity: 0.4; cursor: not-allowed; }
+  .btn.ghost{ background: transparent; color: var(--ink); border: 1px solid rgba(14,34,56,0.35); }
+  .btn.wide{ flex:1; }
+  .btn.record{ background: var(--coral); color: #fff; }
+  .new-q-row{ margin-top: 10px; }
+  .divider{ border: none; border-top: 1px dashed rgba(14,34,56,0.25); margin: 22px 0 18px; }
+  .checklist-label{ font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: var(--ink); opacity: 0.6; margin-bottom: 12px; }
+  .check-item{ display:flex; align-items:flex-start; gap: 10px; padding: 7px 0; cursor: pointer; font-size: 14.5px; line-height: 1.4; }
+  .check-item input{ margin-top: 3px; width: 16px; height: 16px; accent-color: var(--teal); flex-shrink: 0; }
+  .footer-row{ display:flex; gap: 10px; margin-top: 20px; }
+  .tip{ background: var(--cream-2); border-radius: 4px; padding: 14px 16px; font-size: 13px; line-height: 1.5; margin-top: 18px; color: var(--ink); }
+  .tip b{ color: var(--teal); }
+  .confirm{ display:none; align-items:center; gap: 8px; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--teal); margin-top: 12px; }
+  .confirm.show{ display:flex; }
+  .recordings{ margin-top: 14px; }
+  .recording-item{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Space Mono',monospace; font-size: 12px; padding: 8px 0;
+    border-bottom: 1px solid rgba(14,34,56,0.1);
+  }
+  .recording-item a{ color: var(--teal); text-decoration: none; }
+  .recording-item a:hover{ text-decoration: underline; }
+  @media (max-width: 400px){ .question{ font-size: 19px; } .timer{ font-size: 28px; } }
+</style>
+</head>
+<body>
+
+<div class="board">
+  <div class="status-strip">
+    <span id="dateLabel">—</span>
+    <span class="streak" id="streakLabel">streak: 0 days</span>
+  </div>
+
+  <div class="ticket">
+    <div class="ticket-inner">
+      <div class="row-head">
+        <div class="brand">Boarding <span>Call</span></div>
+        <div class="day-tag" id="sessionCount">session —</div>
+      </div>
+
+      <div class="category" id="categoryTag">CATEGORY</div>
+      <div class="question" id="questionText">Loading question…</div>
+
+      <div class="camera-wrap" id="cameraWrap">
+        <div class="camera-placeholder" id="cameraPlaceholder">Click "Enable camera" to start<br/>(nothing is uploaded — recordings stay on your device)</div>
+        <video id="preview" autoplay muted playsinline style="display:none;"></video>
+        <div class="rec-dot" id="recDot"><span class="pulse"></span> REC</div>
+      </div>
+
+      <div class="cam-controls">
+        <button class="btn ghost wide" id="enableCamBtn">Enable camera</button>
+        <button class="btn record wide" id="recordBtn" disabled>Start recording</button>
+      </div>
+
+      <div class="controls-row">
+        <div class="timer" id="timerDisplay">01:30</div>
+        <button class="btn" id="timerBtn">Start timer</button>
+        <button class="btn ghost" id="resetTimerBtn">Reset</button>
+      </div>
+
+      <div class="new-q-row">
+        <button class="btn ghost wide" id="newQBtn">New question</button>
+      </div>
+
+      <div class="recordings" id="recordingsList"></div>
+
+      <hr class="divider" />
+
+      <div class="checklist-label">SELF-CHECK — after you answer</div>
+      <label class="check-item"><input type="checkbox" data-idx="0" /> Smiled with your eyes, not just your mouth</label>
+      <label class="check-item"><input type="checkbox" data-idx="1" /> Gave one specific, real example</label>
+      <label class="check-item"><input type="checkbox" data-idx="2" /> Actually answered the question asked</label>
+      <label class="check-item"><input type="checkbox" data-idx="3" /> Kept it under 90 seconds</label>
+
+      <div class="footer-row">
+        <button class="btn wide" id="doneBtn">Mark today practiced</button>
+      </div>
+      <div class="confirm" id="confirmMsg">✓ Logged — see you tomorrow</div>
+
+      <div class="tip" id="tipBox"><b>Tip:</b> Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  { cat: "ABOUT YOU", q: "Tell me about yourself in under a minute." },
+  { cat: "ABOUT YOU", q: "What's one weakness you're actively working on?" },
+  { cat: "TEAMWORK", q: "Tell me about a time a colleague wasn't pulling their weight. What did you do?" },
+  { cat: "TEAMWORK", q: "Describe a time you disagreed with a teammate about how to handle a task." },
+  { cat: "SERVICE RECOVERY", q: "A passenger is upset their meal choice ran out. What do you say to them?" },
+  { cat: "SERVICE RECOVERY", q: "Tell me about a time you turned an unhappy customer into a happy one." },
+  { cat: "SAFETY", q: "A passenger refuses to fasten their seatbelt during turbulence. How do you handle it?" },
+  { cat: "SAFETY", q: "Tell me about a time you had to enforce a rule someone didn't want to follow." },
+  { cat: "ADAPTABILITY", q: "Tell me about a time your plans changed at the last minute. How did you react?" },
+  { cat: "ADAPTABILITY", q: "How would you handle working with a crew from a totally different cultural background?" },
+  { cat: "WHY THIS AIRLINE", q: "Why do you want to work for this specific airline, not just 'be cabin crew'?" },
+  { cat: "WHY THIS AIRLINE", q: "What do you think will be the hardest part of this job for you?" },
+  { cat: "PRESSURE", q: "Tell me about the most stressful moment in a past job and how you got through it." },
+  { cat: "PRESSURE", q: "How do you stay calm when several things go wrong at once?" },
+];
+
+const TIPS = [
+  "Answer the actual question first, then add your example — don't lead with the story.",
+  "Look at the camera lens, not the screen, when the answer matters most.",
+  "One clear example beats three vague ones. Pick the most specific memory you have.",
+  "Pause for half a second before answering — it reads as thoughtful, not rehearsed.",
+  "Tailor at least one sentence to this specific airline, not a generic 'why cabin crew' answer.",
+  "End tricky answers on the resolution, not the problem — leave them with the good outcome.",
+  "A genuine smile changes your voice tone even if they can't fully see your face — smile before you speak."
+];
+
+let state = { streak: 0, lastPracticeDate: null, totalSessions: 0, recentQuestions: [] };
+let currentQ = null;
+let timerSeconds = 90, timerRemaining = 90, timerInterval = null, timerRunning = false;
+
+let mediaStream = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let isRecording = false;
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+
+function updateTimerDisplay(){
+  const m = Math.floor(timerRemaining/60), s = timerRemaining%60;
+  const el = document.getElementById('timerDisplay');
+  el.textContent = `${pad(m)}:${pad(s)}`;
+  el.classList.toggle('low', timerRemaining <= 15);
+}
+function startTimer(){
+  if(timerRunning) return;
+  timerRunning = true;
+  document.getElementById('timerBtn').textContent = 'Pause';
+  timerInterval = setInterval(()=>{
+    timerRemaining--;
+    updateTimerDisplay();
+    if(timerRemaining <= 0){
+      clearInterval(timerInterval);
+      timerRunning = false;
+      document.getElementById('timerBtn').textContent = 'Start timer';
+    }
+  },1000);
+}
+function pauseTimer(){
+  timerRunning = false;
+  clearInterval(timerInterval);
+  document.getElementById('timerBtn').textContent = 'Start timer';
+}
+function resetTimer(){
+  pauseTimer();
+  timerRemaining = timerSeconds;
+  updateTimerDisplay();
+}
+document.getElementById('timerBtn').addEventListener('click', ()=> timerRunning ? pauseTimer() : startTimer());
+document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
+
+function pickQuestion(){
+  let pool = QUESTIONS.filter((_, i) => !state.recentQuestions.includes(i));
+  if(pool.length === 0){ state.recentQuestions = []; pool = QUESTIONS; }
+  const idx = QUESTIONS.indexOf(pool[Math.floor(Math.random()*pool.length)]);
+  currentQ = idx;
+  state.recentQuestions.push(idx);
+  if(state.recentQuestions.length > 6) state.recentQuestions.shift();
+  renderQuestion();
+  resetTimer();
+  clearChecklist();
+  saveState();
+}
+function renderQuestion(){
+  const item = QUESTIONS[currentQ];
+  document.getElementById('categoryTag').textContent = item.cat;
+  document.getElementById('questionText').textContent = item.q;
+}
+function clearChecklist(){ document.querySelectorAll('.check-item input').forEach(cb => cb.checked = false); }
+document.getElementById('newQBtn').addEventListener('click', pickQuestion);
+
+document.getElementById('doneBtn').addEventListener('click', ()=>{
+  const today = new Date().toISOString().slice(0,10);
+  if(state.lastPracticeDate === today){ showConfirm("Already logged for today ✓"); return; }
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  state.streak = (state.lastPracticeDate === yesterday) ? state.streak + 1 : 1;
+  state.lastPracticeDate = today;
+  state.totalSessions += 1;
+  saveState();
+  renderStatus();
+  showConfirm("✓ Logged — see you tomorrow");
+});
+
+function showConfirm(msg){
+  const el = document.getElementById('confirmMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=> el.classList.remove('show'), 2200);
+}
+function renderStatus(){
+  document.getElementById('streakLabel').textContent = `streak: ${state.streak} day${state.streak===1?'':'s'}`;
+  document.getElementById('sessionCount').textContent = `session ${state.totalSessions + 1}`;
+  const d = new Date();
+  document.getElementById('dateLabel').textContent = d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+}
+function rotateTip(){
+  document.getElementById('tipBox').innerHTML = `<b>Tip:</b> ${TIPS[Math.floor(Math.random()*TIPS.length)]}`;
+}
+function saveState(){
+  try{ localStorage.setItem('boarding-call-state', JSON.stringify(state)); }catch(e){}
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem('boarding-call-state');
+    if(raw) state = { ...state, ...JSON.parse(raw) };
+  }catch(e){}
+}
+
+// --- Camera & recording ---
+const enableCamBtn = document.getElementById('enableCamBtn');
+const recordBtn = document.getElementById('recordBtn');
+const preview = document.getElementById('preview');
+const placeholder = document.getElementById('cameraPlaceholder');
+const recDot = document.getElementById('recDot');
+const recordingsList = document.getElementById('recordingsList');
+
+enableCamBtn.addEventListener('click', async ()=>{
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    preview.srcObject = mediaStream;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+    enableCamBtn.textContent = 'Camera on';
+    enableCamBtn.disabled = true;
+    recordBtn.disabled = false;
+  }catch(err){
+    placeholder.textContent = 'Camera access was blocked. Check your browser permissions and reload.';
+  }
+});
+
+recordBtn.addEventListener('click', ()=>{
+  if(!isRecording){
+    recordedChunks = [];
+    let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+    try{ mediaRecorder = new MediaRecorder(mediaStream, options); }
+    catch(e){ mediaRecorder = new MediaRecorder(mediaStream); }
+    mediaRecorder.ondataavailable = (e)=>{ if(e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = saveRecording;
+    mediaRecorder.start();
+    isRecording = true;
+    recordBtn.textContent = 'Stop recording';
+    recDot.classList.add('show');
+  } else {
+    mediaRecorder.stop();
+    isRecording = false;
+    recordBtn.textContent = 'Start recording';
+    recDot.classList.remove('show');
+  }
+});
+
+function saveRecording(){
+  const blob = new Blob(recordedChunks, { type: 'video/webm' });
+  const url = URL.createObjectURL(blob);
+  const item = QUESTIONS[currentQ];
+  const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
+  const row = document.createElement('div');
+  row.className = 'recording-item';
+  row.innerHTML = `<span>${stamp} — ${item.cat}</span><a href="${url}" download="boarding-call-${Date.now()}.webm">Download</a>`;
+  recordingsList.prepend(row);
+}
+
+(function init(){
+  loadState();
+  renderStatus();
+  pickQuestion();
+  rotateTip();
+})();
+</script>
+</body>
+</html>
